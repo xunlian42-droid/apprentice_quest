@@ -1,6 +1,26 @@
 #!/bin/bash
 
-PASSWORD_FILE="passwords02.txt"
+PASSWORD_FILE="passwords03.txt"
+ENCRYPTED_FILE="passwords03.txt.dat"
+
+echo マスターパスワードを入力してください：
+read -s KEY
+echo ""
+
+# 暗号化
+encrypt_file() {
+      openssl enc -aes256 -pbkdf2 -md sha-256 -in "$PASSWORD_FILE" -out "$ENCRYPTED_FILE" -k "$KEY"
+      rm "$PASSWORD_FILE"
+}
+
+# 複合化
+decrypt_file() {
+      if [ -f "$ENCRYPTED_FILE" ]; then
+          openssl enc -d -aes256 -pbkdf2 -md sha-256 -in "$ENCRYPTED_FILE" -out "$PASSWORD_FILE" -k "$KEY"
+      else
+          touch "$PASSWORD_FILE"
+      fi
+}
 
 
 while true
@@ -11,6 +31,7 @@ do
    read choice
 
    if [ "$choice" = "Add Password" ]; then
+       decrypt_file
 
        echo サービス名を入力してください：
        read service
@@ -20,9 +41,11 @@ do
        read pass
        echo "$service:$user:$pass" >> "$PASSWORD_FILE"
 
+       encrypt_file
        echo パスワードの追加は成功しました。
 
    elif [ "$choice" = "Get Password" ]; then
+       decrypt_file
 
        echo サービス名を入力してください：
        read service
@@ -44,6 +67,7 @@ do
           echo そのサービスは登録されていません。
        fi
 
+       encrypt_file
 
    elif [ "$choice" = "Exit" ]; then
        echo Thank you！
